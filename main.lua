@@ -7,7 +7,7 @@ local Http = game:GetService("HttpService")
 _G.Active = true
 
 local function ServerHop()
-    task.wait(3)
+    task.wait(2)
     local success, servers = pcall(function()
         return Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
     end)
@@ -21,15 +21,31 @@ local function ServerHop()
     end
 end
 
+local function UseSkills(toolName)
+    local tool = Player.Backpack:FindFirstChild(toolName) or Player.Character:FindFirstChild(toolName)
+    if tool then
+        Player.Character.Humanoid:EquipTool(tool)
+        for _, key in pairs({"Z", "X", "C", "V"}) do
+            VIM:SendKeyEvent(true, key, false, game)
+            task.wait(0.1)
+            VIM:SendKeyEvent(false, key, false, game)
+        end
+    end
+end
+
 local function KillAndLoot(target)
     while target and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 and _G.Active do
         pcall(function()
             Player.Character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 25, 0)
             VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-            for _, key in pairs({"Z", "X", "C", "V"}) do
-                VIM:SendKeyEvent(true, key, false, game)
-                task.wait(0.05)
-                VIM:SendKeyEvent(false, key, false, game)
+            
+            UseSkills("Sword")
+            task.wait(0.2)
+            for _, v in pairs(Player.Backpack:GetChildren()) do
+                if v:IsA("Tool") and (v.ToolTip == "Fruit" or v:FindFirstChild("Ability")) then
+                    UseSkills(v.Name)
+                    break
+                end
             end
         end)
         task.wait(0.1)
@@ -50,13 +66,12 @@ end
 
 task.spawn(function()
     repeat task.wait() until game:IsLoaded()
-    task.wait(8)
+    task.wait(10)
 
     while _G.Active do
         local foundBoss = nil
-        
         for _, v in pairs(workspace:GetDescendants()) do
-            if (v.Name == "Sea King" or v.Name == "Hydra" or v.Name == "Ghost Ship") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+            if (v.Name == "Sea King" or v.Name == "Hydra") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
                 foundBoss = v
                 break
             end
@@ -65,7 +80,7 @@ task.spawn(function()
         if foundBoss then
             KillAndLoot(foundBoss)
         else
-            task.wait(20)
+            task.wait(15)
             ServerHop()
         end
     end
@@ -75,7 +90,7 @@ local sg = Instance.new("ScreenGui", Player.PlayerGui)
 local t = Instance.new("TextLabel", sg)
 t.Size = UDim2.new(0, 280, 0, 60)
 t.Position = UDim2.new(0.5, -140, 0.05, 0)
-t.Text = "VICTOR HUB: PROCURANDO EVENTO ATIVO..."
+t.Text = "VICTOR HUB: BUSCANDO SEA KING / HYDRA"
 t.BackgroundColor3 = Color3.new(0,0,0)
-t.TextColor3 = Color3.new(0,1,1)
+t.TextColor3 = Color3.new(1,0,0)
 Instance.new("UICorner", t)
