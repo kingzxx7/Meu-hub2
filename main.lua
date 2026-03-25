@@ -7,7 +7,7 @@ local Http = game:GetService("HttpService")
 _G.Active = true
 
 local function ServerHop()
-    task.wait(5)
+    task.wait(3)
     local success, servers = pcall(function()
         return Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
     end)
@@ -21,49 +21,51 @@ local function ServerHop()
     end
 end
 
-local function CollectAndStore()
-    for i = 1, 10 do
+local function KillAndLoot(target)
+    while target and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 and _G.Active do
         pcall(function()
-            for _, v in pairs(workspace:GetChildren()) do
-                if v.Name:find("Chest") or v:IsA("Tool") then
-                    Player.Character.HumanoidRootPart.CFrame = v:IsA("Tool") and v.Handle.CFrame or v.CFrame
-                    task.wait(0.8)
-                    if v:IsA("Tool") then
-                        game:GetService("ReplicatedStorage").Remotes.StoreFruit:InvokeServer(v.Name)
-                    end
-                end
+            Player.Character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 25, 0)
+            VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+            for _, key in pairs({"Z", "X", "C", "V"}) do
+                VIM:SendKeyEvent(true, key, false, game)
+                task.wait(0.05)
+                VIM:SendKeyEvent(false, key, false, game)
             end
         end)
+        task.wait(0.1)
+    end
+    
+    for i = 1, 15 do
+        for _, v in pairs(workspace:GetChildren()) do
+            if v.Name:find("Chest") or v:IsA("Tool") then
+                Player.Character.HumanoidRootPart.CFrame = v:IsA("Tool") and v.Handle.CFrame or v.CFrame
+                if v:IsA("Tool") then game:GetService("ReplicatedStorage").Remotes.StoreFruit:InvokeServer(v.Name) end
+                task.wait(0.5)
+            end
+        end
         task.wait(1)
     end
+    ServerHop()
 end
 
 task.spawn(function()
     repeat task.wait() until game:IsLoaded()
-    task.wait(10)
+    task.wait(8)
 
     while _G.Active do
-        local found = false
+        local foundBoss = nil
+        
         for _, v in pairs(workspace:GetDescendants()) do
-            if (v.Name == "Sea King" or v.Name == "Hydra") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                found = true
-                while v.Humanoid.Health > 0 and _G.Active do
-                    Player.Character.HumanoidRootPart.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0, 20, 0)
-                    VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                    for _, key in pairs({"Z", "X", "C", "V"}) do
-                        VIM:SendKeyEvent(true, key, false, game)
-                        task.wait(0.1)
-                        VIM:SendKeyEvent(false, key, false, game)
-                    end
-                    task.wait(0.5)
-                end
-                CollectAndStore()
-                ServerHop()
+            if (v.Name == "Sea King" or v.Name == "Hydra" or v.Name == "Ghost Ship") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                foundBoss = v
+                break
             end
         end
-        
-        if not found then
-            task.wait(15)
+
+        if foundBoss then
+            KillAndLoot(foundBoss)
+        else
+            task.wait(20)
             ServerHop()
         end
     end
@@ -71,9 +73,9 @@ end)
 
 local sg = Instance.new("ScreenGui", Player.PlayerGui)
 local t = Instance.new("TextLabel", sg)
-t.Size = UDim2.new(0, 250, 0, 50)
-t.Position = UDim2.new(0.5, -125, 0.05, 0)
-t.Text = "AGUARDANDO EVENTO / CARREGANDO..."
+t.Size = UDim2.new(0, 280, 0, 60)
+t.Position = UDim2.new(0.5, -140, 0.05, 0)
+t.Text = "VICTOR HUB: PROCURANDO EVENTO ATIVO..."
 t.BackgroundColor3 = Color3.new(0,0,0)
-t.TextColor3 = Color3.new(1,1,0)
+t.TextColor3 = Color3.new(0,1,1)
 Instance.new("UICorner", t)
